@@ -1,0 +1,90 @@
+Table "comment" {
+  "id" tinyint(4) [default: NULL]
+  "commentBy_id" tinyint(4) [default: NULL]
+  "commentOn_id" tinyint(4) [default: NULL]
+  "comment" varchar(17) [default: NULL]
+  "commentAt" varchar(0) [default: NULL]
+}
+
+Table "follow" {
+  "id" tinyint(4) [default: NULL]
+  "sender" tinyint(4) [default: NULL]
+  "receiver" tinyint(4) [default: NULL]
+  "followOn" varchar(0) [default: NULL]
+}
+
+Table "likes" {
+  "id" tinyint(4) [default: NULL]
+  "likeOn" tinyint(4) [default: NULL]
+  "likeBy" tinyint(4) [default: NULL]
+}
+
+Table "messages" {
+  "id" tinyint(4) [default: NULL]
+  "message" varchar(17) [default: NULL]
+  "messageTo" tinyint(4) [default: NULL]
+  "messageFrom" tinyint(4) [default: NULL]
+  "messageOn" varchar(0) [default: NULL]
+}
+
+Table "retweet" {
+  "id" tinyint(4) [default: NULL]
+  "retweetBy_id" tinyint(4) [default: NULL]
+  "retweetFrom_id" tinyint(4) [default: NULL]
+  "status" varchar(4) [default: NULL]
+  "tweetOn" varchar(0) [default: NULL]
+}
+
+Table "trend" {
+  "id" tinyint(4) [default: NULL]
+  "hashtag" varchar(5) [default: NULL]
+  "user_id" tinyint(4) [default: NULL]
+  "tweet_id" tinyint(4) [default: NULL]
+}
+
+Table "tweet" {
+  "id" tinyint(4) [default: NULL]
+  "status" varchar(15) [default: NULL]
+  "tweetBy_id" tinyint(4) [default: NULL]
+  "postedOn" varchar(0) [default: NULL]
+}
+
+Table "user" {
+  "id" tinyint(4) [default: NULL]
+  "firstName" varchar(5) [default: NULL]
+  "lastName" varchar(3) [default: NULL]
+  "username" varchar(8) [default: NULL]
+  "email" varchar(20) [default: NULL]
+  "password" varchar(60) [default: NULL]
+  "profileImage" varchar(21) [default: NULL]
+  "profileCover" varchar(22) [default: NULL]
+  "bio" varchar(0) [default: NULL]
+  "country" varchar(0) [default: NULL]
+  "website" varchar(0) [default: NULL]
+}
+
+Ref "fk_user":"user"."id" < "comment"."commentBy_id" [update: cascade, delete: cascade]
+
+Ref "fk_tweet":"tweet"."id" < "comment"."commentOn_id" [update: cascade, delete: cascade]
+
+Ref "fk_sender":"user"."id" < "follow"."sender" [update: cascade, delete: cascade]
+
+Ref "fk_receiver":"user"."id" < "follow"."receiver" [update: cascade, delete: cascade]
+
+Ref "fk_likeon":"user"."id" < "likes"."likeOn" [update: cascade, delete: cascade]
+
+Ref "fk_likeby":"user"."id" < "likes"."likeBy" [update: cascade, delete: cascade]
+
+Ref "fk_messageto":"user"."id" < "messages"."messageTo" [update: cascade, delete: cascade]
+
+Ref "fk_messagefrom":"user"."id" < "messages"."messageFrom" [update: cascade, delete: cascade]
+
+Ref "fk_retweetby":"user"."id" < "retweet"."retweetBy_id" [update: cascade, delete: cascade]
+
+Ref "fk_retweetfrom":"tweet"."id" < "retweet"."retweetFrom_id" [update: cascade, delete: cascade]
+
+Ref "fk_user":"user"."id" < "trend"."user_id" [update: cascade, delete: cascade]
+
+Ref "fk_tweet":"tweet"."id" < "trend"."tweet_id" [update: cascade, delete: cascade]
+
+Ref "fk_tweetby":"user"."id" < "tweet"."tweetBy_id" [update: cascade, delete: cascade]
