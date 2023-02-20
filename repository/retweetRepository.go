@@ -7,7 +7,11 @@ import (
 	"time"
 
 	db "github.com/renaldyhidayatt/twittersqlc/db/sqlc"
+	"github.com/renaldyhidayatt/twittersqlc/dto/request"
+	"github.com/renaldyhidayatt/twittersqlc/interfaces"
 )
+
+type RetweetRepository = interfaces.IRetweetRepository
 
 type retweetRepository struct {
 	db  *db.Queries
@@ -18,19 +22,19 @@ func NewRetweetRepository(db *db.Queries, ctx context.Context) *retweetRepositor
 	return &retweetRepository{db: db, ctx: ctx}
 }
 
-func (r *retweetRepository) RetweetCount(user_id int, tweet_id int, tweet_by int) (string, error) {
-	res, err := r.WasRetweetBy(user_id, tweet_id)
+func (r *retweetRepository) RetweetCount(req request.RetweetCountRequest) (string, error) {
+	res, err := r.WasRetweetBy(req.UserID, req.TweetID)
 
 	if err != nil {
 		return "", fmt.Errorf("failed: %w", err)
 	}
 
 	if res {
-		if user_id != tweet_id {
+		if req.UserID != req.TweetID {
 			err = r.db.DeleteNotification(r.ctx, db.DeleteNotificationParams{
-				NotificationFor:  int32(tweet_by),
-				NotificationFrom: int32(user_id),
-				Target:           int32(tweet_id),
+				NotificationFor:  int32(req.TweetBy),
+				NotificationFrom: int32(req.UserID),
+				Target:           int32(req.TweetID),
 				Type:             db.EnumNotificationTypeRetweet,
 			})
 			if err != nil {
@@ -38,7 +42,7 @@ func (r *retweetRepository) RetweetCount(user_id int, tweet_id int, tweet_by int
 			}
 		}
 
-		_, err = r.DeleteRetweet(user_id, tweet_id)
+		_, err = r.DeleteRetweet(req.TweetID, req.TweetID)
 
 		if err != nil {
 			return "", fmt.Errorf("failed to delete retweet: %w", err)
@@ -54,11 +58,11 @@ func (r *retweetRepository) RetweetCount(user_id int, tweet_id int, tweet_by int
 
 		return string(response), nil
 	} else {
-		if user_id != tweet_by {
+		if req.UserID != req.TweetBy {
 			_, err = r.db.CreateNotification(r.ctx, db.CreateNotificationParams{
-				NotificationFor:   int32(tweet_by),
-				NotificationFrom:  int32(user_id),
-				Target:            int32(tweet_id),
+				NotificationFor:   int32(req.TweetBy),
+				NotificationFrom:  int32(req.TweetID),
+				Target:            int32(req.UserID),
 				Type:              "retweet",
 				Status:            0,
 				NotificationCount: 0,
@@ -70,8 +74,8 @@ func (r *retweetRepository) RetweetCount(user_id int, tweet_id int, tweet_by int
 		}
 
 		_, err = r.db.CreateRetweet(r.ctx, db.CreateRetweetParams{
-			RetweetBy:   int32(user_id),
-			RetweetFrom: int32(tweet_id),
+			RetweetBy:   int32(req.UserID),
+			RetweetFrom: int32(req.TweetID),
 		})
 		if err != nil {
 			return "", fmt.Errorf("failed to create retweet: %w", err)
@@ -119,19 +123,19 @@ func (r *retweetRepository) DeleteRetweet(user_id int, tweet_id int) (bool, erro
 	return true, nil
 }
 
-func (r *retweetRepository) ResetRetweetCount(user_id int, tweet_id int, tweetby int) (string, error) {
-	res, err := r.WasRetweetBy(user_id, tweet_id)
+func (r *retweetRepository) ResetRetweetCount(req request.ResetRetweetRequest) (string, error) {
+	res, err := r.WasRetweetBy(req.UserID, req.TweetID)
 
 	if err != nil {
 		return "", fmt.Errorf("failed to check retweet: %w", err)
 	}
 
 	if res {
-		if user_id != tweetby {
+		if req.UserID != req.TweetBy {
 			err = r.db.DeleteNotification(r.ctx, db.DeleteNotificationParams{
-				NotificationFor:  int32(tweetby),
-				NotificationFrom: int32(user_id),
-				Target:           int32(tweet_id),
+				NotificationFor:  int32(req.TweetBy),
+				NotificationFrom: int32(req.UserID),
+				Target:           int32(req.TweetID),
 				Type:             "retweet",
 			})
 

@@ -1,5 +1,7 @@
 DB_URL=postgresql://postgres:@localhost:5432/twittersqlc?sslmode=disable
 
+run:
+	go run main.go
 
 migrateup:
 	migrate -path db/migration -database "$(DB_URL)" -verbose up

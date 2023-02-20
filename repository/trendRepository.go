@@ -7,7 +7,10 @@ import (
 
 	db "github.com/renaldyhidayatt/twittersqlc/db/sqlc"
 	"github.com/renaldyhidayatt/twittersqlc/dto/request"
+	"github.com/renaldyhidayatt/twittersqlc/interfaces"
 )
+
+type TrendRepository = interfaces.ITrendRepository
 
 type trendRepository struct {
 	db  *db.Queries

@@ -116,7 +116,7 @@ func (q *Queries) GetCommentcount(ctx context.Context, commenton int32) (int64, 
 	return count, err
 }
 
-const repliesTweets = `-- name: RepliesTweets :one
+const repliesTweets = `-- name: RepliesTweets :many
 SELECT "commentID", "commentBy", "commentOn", comment, "commentAt", user_id, "firstName", "lastName", username, email, password, "profileImage", "profileCover", following, followers, bio, country, website FROM "comment" LEFT JOIN "users" ON "commentBy"="user_id" WHERE "commentBy"= $1 ORDER BY commentAt DESC
 `
 
@@ -141,30 +141,46 @@ type RepliesTweetsRow struct {
 	Website      sql.NullString `json:"website"`
 }
 
-func (q *Queries) RepliesTweets(ctx context.Context, commentby int32) (RepliesTweetsRow, error) {
-	row := q.queryRow(ctx, q.repliesTweetsStmt, repliesTweets, commentby)
-	var i RepliesTweetsRow
-	err := row.Scan(
-		&i.CommentID,
-		&i.CommentBy,
-		&i.CommentOn,
-		&i.Comment,
-		&i.CommentAt,
-		&i.UserID,
-		&i.FirstName,
-		&i.LastName,
-		&i.Username,
-		&i.Email,
-		&i.Password,
-		&i.ProfileImage,
-		&i.ProfileCover,
-		&i.Following,
-		&i.Followers,
-		&i.Bio,
-		&i.Country,
-		&i.Website,
-	)
-	return i, err
+func (q *Queries) RepliesTweets(ctx context.Context, commentby int32) ([]RepliesTweetsRow, error) {
+	rows, err := q.query(ctx, q.repliesTweetsStmt, repliesTweets, commentby)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []RepliesTweetsRow
+	for rows.Next() {
+		var i RepliesTweetsRow
+		if err := rows.Scan(
+			&i.CommentID,
+			&i.CommentBy,
+			&i.CommentOn,
+			&i.Comment,
+			&i.CommentAt,
+			&i.UserID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Username,
+			&i.Email,
+			&i.Password,
+			&i.ProfileImage,
+			&i.ProfileCover,
+			&i.Following,
+			&i.Followers,
+			&i.Bio,
+			&i.Country,
+			&i.Website,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const wasCommentBy = `-- name: WasCommentBy :one

@@ -3,11 +3,16 @@ package repository
 import (
 	"context"
 	"fmt"
+	"math/rand"
+	"time"
 
 	db "github.com/renaldyhidayatt/twittersqlc/db/sqlc"
 	"github.com/renaldyhidayatt/twittersqlc/dto/request"
+	"github.com/renaldyhidayatt/twittersqlc/interfaces"
 	"github.com/renaldyhidayatt/twittersqlc/security"
 )
+
+type AuthRepository = interfaces.IAuthRepository
 
 type authRepository struct {
 	db  *db.Queries
@@ -21,10 +26,30 @@ func NewAuthRepository(db *db.Queries, ctx context.Context) *authRepository {
 func (r *authRepository) RegisterUser(req request.RegisterRequest) (db.User, error) {
 	var createUser db.CreateUserParams
 
+	profilePic := ""
+	profileCover := ""
+
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(3)
+
+	switch randomNumber {
+	case 0:
+		profilePic = "static/defaultProfilePic.png"
+		profileCover = "static/backgroundCoverPic.svg"
+	case 1:
+		profilePic = "static/defaultPic.svg"
+		profileCover = "static/backgroundImage.svg"
+	case 2:
+		profilePic = "static/profilePic.jpeg"
+		profileCover = "static/backgroundCoverPic.svg"
+	}
+
 	createUser.FirstName = req.Firstname
 	createUser.LastName = req.Lastname
 	createUser.Email = req.Email
 	createUser.Password = security.HashPassword(req.Password)
+	createUser.ProfileCover = profileCover
+	createUser.ProfileImage = profilePic
 
 	res, err := r.db.CreateUser(r.ctx, createUser)
 

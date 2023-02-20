@@ -6,7 +6,11 @@ import (
 	"time"
 
 	db "github.com/renaldyhidayatt/twittersqlc/db/sqlc"
+	"github.com/renaldyhidayatt/twittersqlc/dto/request"
+	"github.com/renaldyhidayatt/twittersqlc/interfaces"
 )
+
+type CommentRepository = interfaces.ICommentRepository
 
 type commentRepository struct {
 	db  *db.Queries
@@ -17,21 +21,21 @@ func NewCommentRepository(db *db.Queries, ctx context.Context) *commentRepositor
 	return &commentRepository{db: db, ctx: ctx}
 }
 
-func (r *commentRepository) Comment(commentBy int, commentOn int, comment string, postedBy int) (db.Comment, error) {
+func (r *commentRepository) Comment(req request.CreateCommentRequest) (db.Comment, error) {
 	var commentDb db.Comment
 
-	res, err := r.WasCommentBy(commentBy, commentOn)
+	res, err := r.WasCommentBy(req.CommentBy, req.CommentOn)
 
 	if err != nil {
 		return db.Comment{}, fmt.Errorf("failed was comment : %w", err)
 	}
 
 	if res == commentDb {
-		if commentBy != postedBy {
+		if req.CommentBy != req.PostedBy {
 			err = r.db.DeleteNotification(r.ctx, db.DeleteNotificationParams{
-				NotificationFor:  int32(postedBy),
-				NotificationFrom: int32(commentBy),
-				Target:           int32(commentOn),
+				NotificationFor:  int32(req.PostedBy),
+				NotificationFrom: int32(req.CommentBy),
+				Target:           int32(req.CommentOn),
 				Type:             "comment",
 			})
 
@@ -40,11 +44,11 @@ func (r *commentRepository) Comment(commentBy int, commentOn int, comment string
 			}
 		}
 	} else {
-		if commentBy != postedBy {
+		if req.CommentBy != req.PostedBy {
 			_, err := r.db.CreateNotification(r.ctx, db.CreateNotificationParams{
-				NotificationFor:   int32(postedBy),
-				NotificationFrom:  int32(commentBy),
-				Target:            int32(commentOn),
+				NotificationFor:   int32(req.PostedBy),
+				NotificationFrom:  int32(req.CommentBy),
+				Target:            int32(req.CommentOn),
 				Type:              "comment",
 				Status:            0,
 				NotificationCount: 0,
@@ -56,9 +60,9 @@ func (r *commentRepository) Comment(commentBy int, commentOn int, comment string
 			}
 		}
 		res, err := r.db.CreateComment(r.ctx, db.CreateCommentParams{
-			CommentBy: int32(commentBy),
-			CommentOn: int32(commentOn),
-			Comment:   comment,
+			CommentBy: int32(req.CommentBy),
+			CommentOn: int32(req.CommentOn),
+			Comment:   req.Comment,
 			CommentAt: time.Now(),
 		})
 
@@ -85,21 +89,21 @@ func (r *commentRepository) WasCommentBy(commentBy int, commentOn int) (db.Comme
 	return res, nil
 }
 
-func (r *commentRepository) DeleteComment(comment_id int, commentBy int, commentOn int, tweetby int) (bool, error) {
+func (r *commentRepository) DeleteComment(req request.DeleteCommentRequest) (bool, error) {
 	var comment db.Comment
 
-	res, err := r.WasCommentBy(commentBy, commentOn)
+	res, err := r.WasCommentBy(req.CommentBy, req.CommentOn)
 
 	if err != nil {
 		return false, fmt.Errorf("failed :%w", err)
 	}
 
 	if res == comment {
-		if commentBy != tweetby {
+		if req.CommentBy != req.TweetBy {
 			err = r.db.DeleteNotification(r.ctx, db.DeleteNotificationParams{
-				NotificationFor:  int32(tweetby),
-				NotificationFrom: int32(commentBy),
-				Target:           int32(commentOn),
+				NotificationFor:  int32(req.TweetBy),
+				NotificationFrom: int32(req.CommentBy),
+				Target:           int32(req.CommentOn),
 				Type:             "comment",
 			})
 
@@ -108,7 +112,7 @@ func (r *commentRepository) DeleteComment(comment_id int, commentBy int, comment
 			}
 		}
 
-		err = r.db.DeleteComment(r.ctx, int32(comment_id))
+		err = r.db.DeleteComment(r.ctx, int32(req.CommentID))
 
 		if err != nil {
 			return true, fmt.Errorf("failed :%w", err)
@@ -116,4 +120,20 @@ func (r *commentRepository) DeleteComment(comment_id int, commentBy int, comment
 	}
 
 	return true, nil
+}
+
+func (r *commentRepository) RepliesTweet(email string) ([]db.RepliesTweetsRow, error) {
+	res, err := r.db.GetUsernameOREmail(r.ctx, email)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed user undefined: %w", err)
+	}
+
+	resemail, err := r.db.RepliesTweets(r.ctx, int32(res.UserID))
+
+	if err != nil {
+		return nil, fmt.Errorf("failed error :%w", err)
+	}
+
+	return resemail, nil
 }

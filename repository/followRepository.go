@@ -7,7 +7,10 @@ import (
 
 	db "github.com/renaldyhidayatt/twittersqlc/db/sqlc"
 	"github.com/renaldyhidayatt/twittersqlc/dto/request"
+	"github.com/renaldyhidayatt/twittersqlc/interfaces"
 )
+
+type FollowRepository = interfaces.IFollowRepository
 
 type followRepository struct {
 	db  *db.Queries
@@ -18,11 +21,11 @@ func NewFollowRepository(db *db.Queries, ctx context.Context) *followRepository 
 	return &followRepository{db: db, ctx: ctx}
 }
 
-func (r *followRepository) CheckFollow(following int, user_id int) (db.Follow, error) {
+func (r *followRepository) CheckFollow(req request.FollowCheckRequest) (db.Follow, error) {
 	var followCheck db.CheckFollowParams
 
-	followCheck.Sender = int32(user_id)
-	followCheck.Receiver = int32(following)
+	followCheck.Sender = int32(req.UserID)
+	followCheck.Receiver = int32(req.Following)
 
 	res, err := r.db.CheckFollow(r.ctx, followCheck)
 
@@ -33,8 +36,14 @@ func (r *followRepository) CheckFollow(following int, user_id int) (db.Follow, e
 	return res, nil
 }
 
-func (r *followRepository) WhoToFollow(user_id int) ([]db.User, error) {
-	res, err := r.db.WhoToFollow(r.ctx, int32(user_id))
+func (r *followRepository) WhoToFollow(email string) ([]db.User, error) {
+	res_usr, err := r.db.GetUsernameOREmail(r.ctx, email)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed undefined user: %w", err)
+	}
+
+	res, err := r.db.WhoToFollow(r.ctx, int32(res_usr.UserID))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed whotofollow: %w", err)
@@ -83,11 +92,11 @@ func (r *followRepository) Follow(req request.AddFollowRequest) (db.ResultFollow
 	return ress, nil
 }
 
-func (r *followRepository) UnFollow(unfollowId int, userid int) (db.ResultFollowOrUnFollowRow, error) {
+func (r *followRepository) UnFollow(req request.UnFollowRequest) (db.ResultFollowOrUnFollowRow, error) {
 	var unfollow db.UnFollowParams
 
-	unfollow.Sender = int32(userid)
-	unfollow.Receiver = int32(unfollowId)
+	unfollow.Sender = int32(req.UserID)
+	unfollow.Receiver = int32(req.UnfollowID)
 
 	res, err := r.db.UnFollow(r.ctx, unfollow)
 
@@ -95,13 +104,13 @@ func (r *followRepository) UnFollow(unfollowId int, userid int) (db.ResultFollow
 		return db.ResultFollowOrUnFollowRow{}, fmt.Errorf("faild unfollow :%w", err)
 	}
 
-	_, err = r.db.RemoveFollowingCount(r.ctx, int32(userid))
+	_, err = r.db.RemoveFollowingCount(r.ctx, int32(req.UserID))
 
 	if err != nil {
 		return db.ResultFollowOrUnFollowRow{}, fmt.Errorf("faild removefollowing :%w", err)
 	}
 
-	_, err = r.db.RemoveFollowersCount(r.ctx, int32(userid))
+	_, err = r.db.RemoveFollowersCount(r.ctx, int32(req.UserID))
 
 	if err != nil {
 		return db.ResultFollowOrUnFollowRow{}, fmt.Errorf("failed removefollowers: %w", err)
@@ -121,8 +130,15 @@ func (r *followRepository) UnFollow(unfollowId int, userid int) (db.ResultFollow
 	return ress, nil
 }
 
-func (r *followRepository) ResultFollowingList(profileid int) ([]db.ResultFollowingListRow, error) {
-	res, err := r.db.ResultFollowingList(r.ctx, int32(profileid))
+func (r *followRepository) ResultFollowingList(email string) ([]db.ResultFollowingListRow, error) {
+
+	res_user, err := r.db.GetUsernameOREmail(r.ctx, email)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed undefined user: %w", err)
+	}
+
+	res, err := r.db.ResultFollowingList(r.ctx, int32(res_user.UserID))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed result followlist :%w", err)
@@ -131,8 +147,15 @@ func (r *followRepository) ResultFollowingList(profileid int) ([]db.ResultFollow
 	return res, nil
 }
 
-func (r *followRepository) ResultFollowersList(profileid int) ([]db.ResultFollowersListRow, error) {
-	res, err := r.db.ResultFollowersList(r.ctx, int32(profileid))
+func (r *followRepository) ResultFollowersList(email string) ([]db.ResultFollowersListRow, error) {
+
+	res_usr, err := r.db.GetUsernameOREmail(r.ctx, email)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed undefined user: %w", err)
+	}
+
+	res, err := r.db.ResultFollowersList(r.ctx, int32(res_usr.UserID))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed result followersList: %w", err)
@@ -141,8 +164,14 @@ func (r *followRepository) ResultFollowersList(profileid int) ([]db.ResultFollow
 	return res, nil
 }
 
-func (r *followRepository) SuggestedList(profile_id int) ([]db.SuggestedListRow, error) {
-	res, err := r.db.SuggestedList(r.ctx, int32(profile_id))
+func (r *followRepository) SuggestedList(email string) ([]db.SuggestedListRow, error) {
+	res_usr, err := r.db.GetUsernameOREmail(r.ctx, email)
+
+	if err != nil {
+		return nil, fmt.Errorf("failed undefined user: %w", err)
+	}
+
+	res, err := r.db.SuggestedList(r.ctx, int32(res_usr.UserID))
 
 	if err != nil {
 		return nil, fmt.Errorf("failed suggedlist :%w", err)

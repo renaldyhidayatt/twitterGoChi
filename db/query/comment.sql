@@ -1,4 +1,4 @@
--- name: RepliesTweets :one
+-- name: RepliesTweets :many
 SELECT * FROM "comment" LEFT JOIN "users" ON "commentBy"="user_id" WHERE "commentBy"= $1 ORDER BY commentAt DESC;
 
 -- name: GetComment :one

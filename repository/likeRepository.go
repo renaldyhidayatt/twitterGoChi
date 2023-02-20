@@ -6,7 +6,11 @@ import (
 	"time"
 
 	db "github.com/renaldyhidayatt/twittersqlc/db/sqlc"
+	"github.com/renaldyhidayatt/twittersqlc/dto/request"
+	"github.com/renaldyhidayatt/twittersqlc/interfaces"
 )
+
+type LikeRepository = interfaces.ILikesRepository
 
 type likeRepository struct {
 	db  *db.Queries
@@ -27,10 +31,10 @@ func (r *likeRepository) GetLikes(tweet_id int) (int64, error) {
 	return res, nil
 }
 
-func (r *likeRepository) Likes(likedBy int, tweetId int, tweetBy int) (map[string]int, error) {
+func (r *likeRepository) Likes(req request.LikesRequest) (map[string]int, error) {
 	likes, err := r.db.WasLikeBy(r.ctx, db.WasLikeByParams{
-		LikeBy: int32(likedBy),
-		LikeOn: int32(tweetId),
+		LikeBy: int32(req.LikedBy),
+		LikeOn: int32(req.TweetID),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if tweet was liked by user: %w", err)
@@ -39,10 +43,10 @@ func (r *likeRepository) Likes(likedBy int, tweetId int, tweetBy int) (map[strin
 	result := make(map[string]int)
 	if likes.LikeID == 0 {
 		// Not liked
-		if likedBy != tweetBy {
+		if req.LikedBy != req.TweetBy {
 			if _, err := r.db.CreateNotification(r.ctx, db.CreateNotificationParams{
-				NotificationFor:   int32(tweetBy),
-				NotificationFrom:  int32(likedBy),
+				NotificationFor:   int32(req.TweetBy),
+				NotificationFrom:  int32(req.LikedBy),
 				Type:              "like",
 				Status:            0,
 				NotificationCount: 0,
@@ -52,27 +56,27 @@ func (r *likeRepository) Likes(likedBy int, tweetId int, tweetBy int) (map[strin
 			}
 		}
 		if _, err := r.db.CreateLike(r.ctx, db.CreateLikeParams{
-			LikeBy: int32(likedBy),
-			LikeOn: int32(tweetId),
+			LikeBy: int32(req.LikedBy),
+			LikeOn: int32(req.TweetID),
 		}); err != nil {
 			return nil, fmt.Errorf("failed to create like: %w", err)
 		}
 		result["likes"] = 1
 	} else {
 		// Liked
-		if likedBy != tweetBy {
+		if req.LikedBy != req.TweetBy {
 			if err := r.db.DeleteNotification(r.ctx, db.DeleteNotificationParams{
-				NotificationFor:  int32(tweetBy),
-				NotificationFrom: int32(likedBy),
-				Target:           int32(tweetId),
+				NotificationFor:  int32(req.TweetBy),
+				NotificationFrom: int32(req.LikedBy),
+				Target:           int32(req.TweetID),
 				Type:             "like",
 			}); err != nil {
 				return nil, fmt.Errorf("failed to delete notification: %w", err)
 			}
 		}
 		if err := r.db.DeleteLike(r.ctx, db.DeleteLikeParams{
-			LikeBy: int32(likedBy),
-			LikeOn: int32(tweetId),
+			LikeBy: int32(req.LikedBy),
+			LikeOn: int32(req.TweetID),
 		}); err != nil {
 			return nil, fmt.Errorf("failed to delete like: %w", err)
 		}
