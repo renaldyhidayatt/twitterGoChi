@@ -11,6 +11,35 @@ import (
 	"time"
 )
 
+const createTweet = `-- name: CreateTweet :one
+INSERT INTO "tweet" ("status", "tweetBy", "tweetImage", "postedOn") VALUES ($1,$2,$3,$4) RETURNING tweet_id, status, "tweetBy", "tweetImage", "postedOn"
+`
+
+type CreateTweetParams struct {
+	Status     string    `json:"status"`
+	TweetBy    int32     `json:"tweetBy"`
+	TweetImage string    `json:"tweetImage"`
+	PostedOn   time.Time `json:"postedOn"`
+}
+
+func (q *Queries) CreateTweet(ctx context.Context, arg CreateTweetParams) (Tweet, error) {
+	row := q.queryRow(ctx, q.createTweetStmt, createTweet,
+		arg.Status,
+		arg.TweetBy,
+		arg.TweetImage,
+		arg.PostedOn,
+	)
+	var i Tweet
+	err := row.Scan(
+		&i.TweetID,
+		&i.Status,
+		&i.TweetBy,
+		&i.TweetImage,
+		&i.PostedOn,
+	)
+	return i, err
+}
+
 const getHashTagTweet = `-- name: GetHashTagTweet :many
 SELECT u.user_id, "firstName", "lastName", username, email, password, "profileImage", "profileCover", following, followers, bio, country, website, tweet_id, status, "tweetBy", "tweetImage", "postedOn", "trendID", hashtag, t.user_id, "tweetId", "createdOn" FROM users u LEFT JOIN tweet p ON p.tweetBy=u.user_id INNER JOIN trends t ON p.tweet_id=t.tweetId WHERE hashtag=$1 ORDER BY postedOn DESC
 `

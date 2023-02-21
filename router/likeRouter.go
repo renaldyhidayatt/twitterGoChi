@@ -12,20 +12,20 @@ import (
 	"github.com/renaldyhidayatt/twittersqlc/services"
 )
 
-func NewRetweetRouter(prefix string, db *db.Queries, ctx context.Context, router *chi.Mux) {
-	repository := repository.NewRetweetRepository(db, ctx)
-	services := services.NewRetweetService(repository)
-	handler := handler.NewRetweetHandler(services)
+func NewLikeRouter(prefix string, db *db.Queries, ctx context.Context, router *chi.Mux) {
+	repository := repository.NewLikeRepository(db, ctx)
+	services := services.NewLikeService(repository)
+	handler := handler.NewLikesHandler(services)
 
 	router.Route(prefix, func(r chi.Router) {
 		r.Use(middlewares.MiddlewareAuthentication)
+
 		r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			w.Write([]byte("Hello Retweet Router"))
+			w.Write([]byte("Hello Comment Route"))
+
 		})
 
-		r.Post("/retweetcount", handler.RetweetCount)
-		r.Post("/resetretweetcount", handler.ResetRetweetCount)
-		r.Post("/getretweet/{tweet_id}", handler.GetRetweet)
-		r.Post("/create", handler.CreateRetweet)
+		r.Post("/getlikes/{tweet_id}", handler.GetLikes)
+		r.Post("/likes", handler.Likes)
 	})
 }

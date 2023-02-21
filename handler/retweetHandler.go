@@ -88,3 +88,28 @@ func (h *retweetHandler) GetRetweet(w http.ResponseWriter, r *http.Request) {
 
 	response.ResponseMessage(w, "Berhasil Retweet ", res, http.StatusOK)
 }
+
+func (h *retweetHandler) CreateRetweet(w http.ResponseWriter, r *http.Request) {
+	var retweet request.CreateRetweetRequest
+
+	err := json.NewDecoder(r.Body).Decode(&retweet)
+
+	if err != nil {
+		response.ResponseError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err = retweet.Validate(); err != nil {
+		response.ResponseError(w, http.StatusUnprocessableEntity, err)
+		return
+	}
+
+	res, err := h.services.CreateRetweet(retweet)
+
+	if err != nil {
+		response.ResponseError(w, http.StatusUnprocessableEntity, err)
+		return
+	} else {
+		response.ResponseMessage(w, "Berhasil mendapatkan data", res, http.StatusOK)
+	}
+}

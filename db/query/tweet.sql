@@ -16,3 +16,6 @@ SELECT  count(*) as "count" FROM "tweet" WHERE "tweetBy"=$1;
 -- name: GetTweet :one
 SELECT * FROM "tweet" LEFT JOIN "users" ON users.user_id=tweet."tweetBy" WHERE tweet.tweet_id=$1 AND tweet."tweetBy"=$2;
 
+-- name: CreateTweet :one
+INSERT INTO "tweet" ("status", "tweetBy", "tweetImage", "postedOn") VALUES ($1,$2,$3,$4) RETURNING *;
+

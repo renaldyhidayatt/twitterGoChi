@@ -166,3 +166,17 @@ func (r *retweetRepository) GetRetweet(tweet_id int) (int64, error) {
 
 	return res, nil
 }
+
+func (r *retweetRepository) CreateRetweet(req request.CreateRetweetRequest) (db.Retweet, error) {
+
+	res, err := r.db.CreateRetweet(r.ctx, db.CreateRetweetParams{
+		RetweetBy:   req.RetweetBy,
+		RetweetFrom: req.RetweetFrom,
+	})
+
+	if err != nil {
+		return db.Retweet{}, fmt.Errorf("failed error :%w", err)
+	}
+
+	return res, nil
+}

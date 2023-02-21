@@ -11,13 +11,30 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	dbConn "github.com/renaldyhidayatt/twittersqlc/db/sqlc"
+	"github.com/renaldyhidayatt/twittersqlc/router"
 	"github.com/renaldyhidayatt/twittersqlc/utils"
 	"github.com/spf13/viper"
 )
 
+var (
+	db *dbConn.Queries
+)
+
 func main() {
 	ctx := context.Background()
+
 	err := utils.Viper()
+
+	if err != nil {
+		log.Fatal(err.Error())
+
+		panic(err)
+	}
+
+	conn, err := utils.Database()
+
+	db = dbConn.New(conn)
 
 	if err != nil {
 		log.Fatal(err.Error())
@@ -32,6 +49,15 @@ func main() {
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World"))
 	})
+
+	router.NewAuthRouter("/auth", db, ctx, r)
+	router.NewCommentRouter("/comment", db, ctx, r)
+	router.NewFollowRouter("/follow", db, ctx, r)
+	router.NewLikeRouter("/like", db, ctx, r)
+	router.NewUserRouter("/user", db, ctx, r)
+	router.NewRetweetRouter("/retweet", db, ctx, r)
+	router.NewTrendRouter("/trend", db, ctx, r)
+	router.NewTweetRouter("/tweet", db, ctx, r)
 
 	serve := &http.Server{
 		Addr:           fmt.Sprintf(":%s", viper.GetString("PORT")),

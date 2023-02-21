@@ -1,6 +1,7 @@
 package services
 
 import (
+	db "github.com/renaldyhidayatt/twittersqlc/db/sqlc"
 	"github.com/renaldyhidayatt/twittersqlc/dto/request"
 	"github.com/renaldyhidayatt/twittersqlc/interfaces"
 	"github.com/renaldyhidayatt/twittersqlc/repository"
@@ -30,6 +31,12 @@ func (s *retweetService) ResetRetweetCount(req request.ResetRetweetRequest) (str
 
 func (s *retweetService) GetRetweet(tweet_id int) (int64, error) {
 	res, err := s.repository.GetRetweet(tweet_id)
+
+	return res, err
+}
+
+func (s *retweetService) CreateRetweet(req request.CreateRetweetRequest) (db.Retweet, error) {
+	res, err := s.repository.CreateRetweet(req)
 
 	return res, err
 }

@@ -6,8 +6,11 @@ import (
 
 	db "github.com/renaldyhidayatt/twittersqlc/db/sqlc"
 	"github.com/renaldyhidayatt/twittersqlc/dto/request"
+	"github.com/renaldyhidayatt/twittersqlc/interfaces"
 	"github.com/renaldyhidayatt/twittersqlc/security"
 )
+
+type UserRepository = interfaces.IUserRepository
 
 type userRepository struct {
 	db  *db.Queries
@@ -28,41 +31,11 @@ func (r *userRepository) FindAll() ([]db.User, error) {
 	return res, nil
 }
 
-func (r *userRepository) GetCurrentUser(id int) (db.User, error) {
-	res, err := r.db.GetCurrentUser(r.ctx, int32(id))
-
-	if err != nil {
-		return db.User{}, fmt.Errorf("failed result user: %w", err)
-	}
-
-	return res, nil
-}
-
-func (r *userRepository) GetUsername(username string) (db.User, error) {
+func (r *userRepository) GetCurrentUser(username string) (db.User, error) {
 	res, err := r.db.GetUsernameOREmail(r.ctx, username)
 
 	if err != nil {
 		return db.User{}, fmt.Errorf("failed result user: %w", err)
-	}
-
-	return res, nil
-}
-
-func (r *userRepository) GetHashTagTweet(hashtag string) ([]db.GetHashTagTweetRow, error) {
-	res, err := r.db.GetHashTagTweet(r.ctx, hashtag)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed result user hashtag: %w", err)
-	}
-
-	return res, nil
-}
-
-func (r *userRepository) GetMention(username string) ([]db.User, error) {
-	res, err := r.db.GetMention(r.ctx, username)
-
-	if err != nil {
-		return nil, fmt.Errorf("failed result user mention: %w", err)
 	}
 
 	return res, nil

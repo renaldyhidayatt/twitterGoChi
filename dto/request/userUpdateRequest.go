@@ -1,5 +1,7 @@
 package request
 
+import "github.com/go-playground/validator/v10"
+
 type UpdateUserRequest struct {
 	Username     string `json:"username"`
 	Firstname    string `json:"firstname"`
@@ -12,4 +14,10 @@ type UpdateUserRequest struct {
 	Bio          string `json:"bio"`
 	Country      string `json:"country"`
 	Website      string `json:"website"`
+}
+
+func (r *UpdateUserRequest) Validate() error {
+	validate := validator.New()
+
+	return validate.Struct(r)
 }

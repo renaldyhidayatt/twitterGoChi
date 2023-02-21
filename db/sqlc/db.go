@@ -54,6 +54,9 @@ func Prepare(ctx context.Context, db DBTX) (*Queries, error) {
 	if q.createTrendStmt, err = db.PrepareContext(ctx, createTrend); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateTrend: %w", err)
 	}
+	if q.createTweetStmt, err = db.PrepareContext(ctx, createTweet); err != nil {
+		return nil, fmt.Errorf("error preparing query CreateTweet: %w", err)
+	}
 	if q.createUserStmt, err = db.PrepareContext(ctx, createUser); err != nil {
 		return nil, fmt.Errorf("error preparing query CreateUser: %w", err)
 	}
@@ -209,6 +212,11 @@ func (q *Queries) Close() error {
 	if q.createTrendStmt != nil {
 		if cerr := q.createTrendStmt.Close(); cerr != nil {
 			err = fmt.Errorf("error closing createTrendStmt: %w", cerr)
+		}
+	}
+	if q.createTweetStmt != nil {
+		if cerr := q.createTweetStmt.Close(); cerr != nil {
+			err = fmt.Errorf("error closing createTweetStmt: %w", cerr)
 		}
 	}
 	if q.createUserStmt != nil {
@@ -430,6 +438,7 @@ type Queries struct {
 	createNotificationStmt     *sql.Stmt
 	createRetweetStmt          *sql.Stmt
 	createTrendStmt            *sql.Stmt
+	createTweetStmt            *sql.Stmt
 	createUserStmt             *sql.Stmt
 	deleteCommentStmt          *sql.Stmt
 	deleteLikeStmt             *sql.Stmt
@@ -480,6 +489,7 @@ func (q *Queries) WithTx(tx *sql.Tx) *Queries {
 		createNotificationStmt:     q.createNotificationStmt,
 		createRetweetStmt:          q.createRetweetStmt,
 		createTrendStmt:            q.createTrendStmt,
+		createTweetStmt:            q.createTweetStmt,
 		createUserStmt:             q.createUserStmt,
 		deleteCommentStmt:          q.deleteCommentStmt,
 		deleteLikeStmt:             q.deleteLikeStmt,
